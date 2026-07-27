@@ -33,13 +33,41 @@ jobs:
           xcodebuild -version
           swift --version
 
+      - name: Register simulator runtimes
+        run: |
+          # A freshly-selected Xcode install needs its first-launch step to run
+          # before any concrete simulators show up in `simctl`/`-showdestinations`
+          # (otherwise only the "Any iOS Simulator Device" placeholder is listed).
+          sudo xcodebuild -runFirstLaunch
+          xcrun simctl list runtimes
+          xcrun simctl list devices available
+
+      - name: Resolve simulator destination
+        id: destination
+        run: |
+          DEVICE=$(xcrun simctl list devices available \
+            | grep -m 1 -E '^\s+iPhone' \
+            | sed -E 's/^[[:space:]]+//; s/ \(.*$//')
+          if [ -z "$DEVICE" ]; then
+            echo "No iPhone simulator found; falling back to a generic destination." >&2
+            echo "generic=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "device=$DEVICE" >> "$GITHUB_OUTPUT"
+            echo "generic=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Build
         run: |
           set -o pipefail
+          if [ "${{ steps.destination.outputs.generic }}" = "true" ]; then
+            DESTINATION='generic/platform=iOS Simulator'
+          else
+            DESTINATION="platform=iOS Simulator,name=${{ steps.destination.outputs.device }}"
+          fi
           xcodebuild build \
             -project "$PROJECT_PATH" \
             -scheme "$SCHEME" \
-            -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
+            -destination "$DESTINATION" \
             -configuration Debug \
             CODE_SIGNING_ALLOWED=NO
 
@@ -49,7 +77,7 @@ jobs:
           xcodebuild test \
             -project "$PROJECT_PATH" \
             -scheme "$SCHEME" \
-            -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
+            -destination "platform=iOS Simulator,name=${{ steps.destination.outputs.device }}" \
             -configuration Debug \
             -resultBundlePath TestResults.xcresult \
             CODE_SIGNING_ALLOWED=NO
