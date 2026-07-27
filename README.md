@@ -1,6 +1,33 @@
 # ios-boilerplate
 
+[![Swift](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)](https://www.swift.org)
+[![Platform](https://img.shields.io/badge/iOS-17%2B-000000?logo=apple&logoColor=white)](https://developer.apple.com/ios/)
+[![Xcode](https://img.shields.io/badge/Xcode-16%2B-147EFB?logo=xcode&logoColor=white)](https://developer.apple.com/xcode/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![CI](https://github.com/aks5686/ios-boilerplate/actions/workflows/ios.yml/badge.svg)](https://github.com/aks5686/ios-boilerplate/actions/workflows/ios.yml)
+
 Production-ready iOS architecture boilerplate built with **Clean Architecture**, **MVVM**, **SwiftUI**, Swift 6 concurrency, and a self-contained design system — no third-party dependencies.
+
+## Getting Started
+
+### Option A: Use as a GitHub Template
+
+Click **[Use this template](https://github.com/aks5686/ios-boilerplate/generate)** at the top of the repo (or the green "Use this template" button on GitHub) to create your own repository seeded with this codebase — no fork relationship, no shared history, ready to push to on day one.
+
+### Option B: Clone Manually
+
+```bash
+git clone https://github.com/aks5686/ios-boilerplate.git MyApp
+cd MyApp
+rm -rf .git && git init
+```
+
+Then rename the project to match your app:
+
+1. In Xcode, open `Boilerplate/Boilerplate.xcodeproj`, select the **Boilerplate** project in the navigator, and rename both the project and the `Boilerplate` target to your app's name (Xcode will offer to rename associated files/folders — accept it).
+2. Rename the `Boilerplate/`, `BoilerplateTests/`, and `BoilerplateUITests/` folders on disk to match, if Xcode didn't already do so.
+3. Update the bundle identifier in the target's **Signing & Capabilities** tab.
+4. Search the project for remaining `Boilerplate` references (scheme name, `AppEnvironment` base URLs in `AuthRepository.swift`, this README) and update them.
 
 ## Features
 
