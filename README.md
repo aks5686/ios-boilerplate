@@ -146,7 +146,7 @@ try keychainManager.delete(for: "current_user")
 xcodebuild test \
   -project Boilerplate/Boilerplate.xcodeproj \
   -scheme Boilerplate \
-  -destination 'platform=iOS Simulator,name=iPhone 16'
+  -destination 'generic/platform=iOS Simulator'
 ```
 
 ## CI/CD
