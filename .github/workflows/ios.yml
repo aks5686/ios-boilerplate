@@ -27,43 +27,45 @@ jobs:
 
       - name: Show environment
         run: |
-          # Deliberately not pinning a specific /Applications/Xcode_*.app here.
-          # GitHub-hosted runners ship several Xcode versions side by side, but
-          # only the one selected by default (via `xcode-select`) is guaranteed
-          # to have its iOS Simulator platform/runtime already installed —
-          # switching to an arbitrary alternate version can leave you with a
-          # device type but no matching runtime ("iOS NN.N is not installed").
           xcode-select -p
           xcodebuild -version
           swift --version
-          xcrun simctl list devices available
 
-      - name: Resolve simulator destination
+      - name: Install iOS Simulator platform
+        run: |
+          # This runner's default Xcode may not have the iOS Simulator runtime
+          # installed at all (only e.g. visionOS runtimes present), which is why
+          # named destinations like "iPhone 16 Pro" fail to resolve regardless of
+          # which name is picked. Installing the platform explicitly guarantees a
+          # matching runtime exists before we try to create a device against it.
+          xcodebuild -downloadPlatform iOS
+          xcrun simctl list runtimes
+
+      - name: Create test simulator
         id: destination
         run: |
-          DEVICE=$(xcrun simctl list devices available \
-            | grep -m 1 -E '^\s+iPhone' \
-            | sed -E 's/^[[:space:]]+//; s/ \(.*$//')
-          if [ -z "$DEVICE" ]; then
-            echo "No iPhone simulator found; falling back to a generic destination." >&2
-            echo "generic=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "device=$DEVICE" >> "$GITHUB_OUTPUT"
-            echo "generic=false" >> "$GITHUB_OUTPUT"
+          set -o pipefail
+          RUNTIME_ID=$(xcrun simctl list runtimes available -j \
+            | jq -r '[.runtimes[] | select(.platform == "iOS")][0].identifier')
+          if [ -z "$RUNTIME_ID" ] || [ "$RUNTIME_ID" = "null" ]; then
+            echo "No iOS runtime available after platform install." >&2
+            exit 1
           fi
+
+          DEVICE_TYPE_ID=$(xcrun simctl list devicetypes -j \
+            | jq -r '[.devicetypes[] | select(.name == "iPhone 15")][0].identifier')
+
+          UDID=$(xcrun simctl create CI-iPhone "$DEVICE_TYPE_ID" "$RUNTIME_ID")
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+          echo "Created simulator $UDID (runtime $RUNTIME_ID)"
 
       - name: Build
         run: |
           set -o pipefail
-          if [ "${{ steps.destination.outputs.generic }}" = "true" ]; then
-            DESTINATION='generic/platform=iOS Simulator'
-          else
-            DESTINATION="platform=iOS Simulator,name=${{ steps.destination.outputs.device }}"
-          fi
           xcodebuild build \
             -project "$PROJECT_PATH" \
             -scheme "$SCHEME" \
-            -destination "$DESTINATION" \
+            -destination "id=${{ steps.destination.outputs.udid }}" \
             -configuration Debug \
             CODE_SIGNING_ALLOWED=NO
 
@@ -73,7 +75,7 @@ jobs:
           xcodebuild test \
             -project "$PROJECT_PATH" \
             -scheme "$SCHEME" \
-            -destination "platform=iOS Simulator,name=${{ steps.destination.outputs.device }}" \
+            -destination "id=${{ steps.destination.outputs.udid }}" \
             -configuration Debug \
             -resultBundlePath TestResults.xcresult \
             CODE_SIGNING_ALLOWED=NO
