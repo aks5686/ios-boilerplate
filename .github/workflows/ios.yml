@@ -39,32 +39,9 @@ jobs:
           xcodebuild build \
             -project "$PROJECT_PATH" \
             -scheme "$SCHEME" \
-            -destination 'generic/platform=iOS Simulator' \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
             -configuration Debug \
             CODE_SIGNING_ALLOWED=NO
-
-      - name: Resolve simulator for testing
-        id: destination
-        run: |
-          # `xcodebuild test` needs a concrete, booted-capable simulator (unlike
-          # `build`, which works fine against the generic destination above).
-          # Pick the first available iPhone runtime rather than hardcoding a
-          # device name/OS version, since the set of pre-installed simulators
-          # varies across GitHub-hosted runner images and Xcode versions.
-          DEVICE=$(xcrun simctl list devices available -j \
-            | python3 -c "
-import json, sys
-data = json.load(sys.stdin)
-for runtime, devices in data['devices'].items():
-    if 'iOS' not in runtime:
-        continue
-    for device in devices:
-        if device['name'].startswith('iPhone'):
-            print(device['name'])
-            sys.exit(0)
-")
-          echo "device=${DEVICE:-iPhone 15}" >> "$GITHUB_OUTPUT"
-          echo "Using simulator: ${DEVICE:-iPhone 15}"
 
       - name: Test
         run: |
@@ -72,7 +49,7 @@ for runtime, devices in data['devices'].items():
           xcodebuild test \
             -project "$PROJECT_PATH" \
             -scheme "$SCHEME" \
-            -destination "platform=iOS Simulator,name=${{ steps.destination.outputs.device }}" \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
             -configuration Debug \
             -resultBundlePath TestResults.xcresult \
             CODE_SIGNING_ALLOWED=NO
