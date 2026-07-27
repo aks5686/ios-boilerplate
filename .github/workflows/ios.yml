@@ -25,21 +25,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Select Xcode
-        run: sudo xcode-select -switch /Applications/Xcode_16.app/Contents/Developer
-
       - name: Show environment
         run: |
+          # Deliberately not pinning a specific /Applications/Xcode_*.app here.
+          # GitHub-hosted runners ship several Xcode versions side by side, but
+          # only the one selected by default (via `xcode-select`) is guaranteed
+          # to have its iOS Simulator platform/runtime already installed —
+          # switching to an arbitrary alternate version can leave you with a
+          # device type but no matching runtime ("iOS NN.N is not installed").
+          xcode-select -p
           xcodebuild -version
           swift --version
-
-      - name: Register simulator runtimes
-        run: |
-          # A freshly-selected Xcode install needs its first-launch step to run
-          # before any concrete simulators show up in `simctl`/`-showdestinations`
-          # (otherwise only the "Any iOS Simulator Device" placeholder is listed).
-          sudo xcodebuild -runFirstLaunch
-          xcrun simctl list runtimes
           xcrun simctl list devices available
 
       - name: Resolve simulator destination
