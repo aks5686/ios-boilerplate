@@ -90,6 +90,63 @@ The Xcode project uses **synchronized file system groups** (Xcode 16+), so any f
 - **Reusable design system** — centralized color and typography tokens that respect Dynamic Type and Dark Mode.
 - **CI/CD** — GitHub Actions pipeline that builds and tests on every push/PR.
 
+## Usage Guide
+
+### Adding a new feature
+
+Follow the same vertical-slice pattern as `Features/Auth`, working outside-in:
+
+1. **Domain** — define a `<Feature>UseCaseProtocol` with the business methods your feature needs, plus any plain domain models. Implement it in `<Feature>UseCase`, depending only on a repository protocol.
+2. **Data** — define `<Feature>RepositoryProtocol` and implement `<Feature>Repository`, using `NetworkClientProtocol` and/or `KeychainManager` to fetch and persist data, mapping DTOs to domain models.
+3. **Presentation** — build an `@Observable` `<Feature>ViewModel` that calls the use case and exposes UI state, and a SwiftUI `<Feature>View` that binds to it.
+4. **Wire it in** — add a `make<Feature>ViewModel()` factory to `AppDependencies` (`App/AppDependencies.swift`) that constructs the repository, use case, and view model in order. Views should only ever ask `AppDependencies` for a ready-made view model, never construct one themselves.
+
+Because the Xcode project uses synchronized file system groups, just add the new `Features/<Feature>/{Domain,Data,Presentation}` folders and files on disk — no `.pbxproj` editing required.
+
+### Networking
+
+`NetworkClient` (`Core/Network/NetworkClient.swift`) is a protocol-oriented, async/await wrapper around `URLSession`. To call an API:
+
+1. Define an `enum` conforming to `Endpoint` for your feature (see `AuthEndpoint`), providing `baseURL`, `path`, `method`, and optionally `headers`, `body`, and `queryItems`.
+2. Inject `NetworkClientProtocol` into your repository (via `AppDependencies`) and call one of:
+   ```swift
+   let user: User = try await networkClient.request(AuthEndpoint.profile)
+   try await networkClient.request(AuthEndpoint.logout)  // no response body
+   ```
+3. Failures surface as `APIError`, and responses are decoded with `JSONDecoder.boilerplateDefault` (snake_case keys, ISO 8601 dates).
+
+Depend on `NetworkClientProtocol`, not the concrete `NetworkClient`, so repositories can be unit tested with a mock/fake implementation.
+
+### Secure Storage
+
+`KeychainManager` (`Core/Storage/KeychainManager.swift`) wraps Keychain Services for storing sensitive data (session tokens, credentials) — never use `UserDefaults` for this.
+
+```swift
+let keychain = KeychainManager()
+
+try keychain.save("token-value", for: "authToken")          // String
+try keychain.save(someCodableModel, for: "userProfile")      // Codable
+let token = try keychain.retrieveString(for: "authToken")
+let profile: UserProfile = try keychain.retrieve(for: "userProfile", as: UserProfile.self)
+try keychain.delete(for: "authToken")
+try keychain.clearAll()                                      // e.g. on logout
+```
+
+All read/write/delete operations throw `KeychainManager.KeychainError`, so wrap calls in `do/catch` or propagate them up through your repository/use case layers.
+
+### Testing
+
+Unit tests use **Swift Testing** (`BoilerplateTests`) and UI tests use XCTest (`BoilerplateUITests`). Run them from the command line with:
+
+```bash
+xcodebuild test \
+  -project Boilerplate.xcodeproj \
+  -scheme Boilerplate \
+  -destination 'platform=iOS Simulator,name=iPhone 16'
+```
+
+Because every cross-layer boundary is a protocol, use cases and repositories can be tested with fake implementations (no live network or Keychain access needed) — see how `AuthUseCase` and `AuthRepository` are tested for the pattern to follow in new features.
+
 ## CI/CD
 
 `.github/workflows/ios.yml` runs on every push/PR to `main`:
