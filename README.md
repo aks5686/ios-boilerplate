@@ -17,12 +17,11 @@ Production-ready iOS boilerplate with Clean Architecture, MVVM, SwiftUI, Swift 6
    git clone https://github.com/<you>/<your-repo>.git
    cd <your-repo>
    ```
-3. **Commit before renaming** — this is your clean baseline, so you can diff or roll back easily if anything looks off.
-4. Run:
+3. Run:
    ```bash
    ./setup.sh YourAppName
    ```
-5. Open the `.xcodeproj` in Xcode and build.
+4. Open the `.xcodeproj` in Xcode and build.
 
 ## Architecture
 
