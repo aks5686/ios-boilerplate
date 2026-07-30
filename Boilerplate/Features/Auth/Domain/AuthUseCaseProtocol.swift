@@ -35,16 +35,13 @@ struct AuthToken: Codable, Sendable, Equatable {
 enum ValidationError: LocalizedError, Sendable, Equatable {
     case invalidEmail
     case invalidPassword
-    case passwordTooShort
 
     var errorDescription: String? {
         switch self {
         case .invalidEmail:
-            return "Please enter a valid email address."
+            return "Please enter your email address."
         case .invalidPassword:
-            return "Please enter a password."
-        case .passwordTooShort:
-            return "Password must be at least 8 characters long."
+            return "Please enter your password."
         }
     }
 }

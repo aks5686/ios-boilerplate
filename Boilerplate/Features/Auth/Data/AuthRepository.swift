@@ -38,19 +38,24 @@ final class AuthRepository: AuthRepositoryProtocol, Sendable {
     }
 
     func login(email: String, password: String) async throws -> User {
-        let endpoint = AuthEndpoint.login(email: email, password: password)
-        let response: LoginResponse = try await networkClient.request(endpoint)
+        // Mocked authentication — no backend wired up yet. Swap this out for the
+        // commented-out network call below (and `AuthEndpoint.login`) once one exists.
+        try await Task.sleep(nanoseconds: 400_000_000)
 
-        try keychainManager.save(response.token, for: StorageKey.token)
-        try keychainManager.save(response.user, for: StorageKey.user)
+        let name = email.components(separatedBy: "@").first?.capitalizedFirstLetter ?? "User"
+        let user = User(id: UUID().uuidString, email: email, name: name)
+        let token = AuthToken(accessToken: UUID().uuidString, refreshToken: UUID().uuidString, expiresIn: 3600)
 
-        return response.user
+        // let endpoint = AuthEndpoint.login(email: email, password: password)
+        // let response: LoginResponse = try await networkClient.request(endpoint)
+
+        try keychainManager.save(token, for: StorageKey.token)
+        try keychainManager.save(user, for: StorageKey.user)
+
+        return user
     }
 
     func logout() async throws {
-        // Best-effort remote invalidation — local state is cleared either way.
-        try? await networkClient.request(AuthEndpoint.logout)
-
         try keychainManager.delete(for: StorageKey.token)
         try keychainManager.delete(for: StorageKey.user)
     }

@@ -10,24 +10,19 @@ Production-ready iOS architecture boilerplate built with **Clean Architecture**,
 
 ## Getting Started
 
-### Option A: Use as a GitHub Template
-
-Click **[Use this template](https://github.com/aks5686/ios-boilerplate/generate)** at the top of the repo (or the green "Use this template" button on GitHub) to create your own repository seeded with this codebase — no fork relationship, no shared history, ready to push to on day one.
-
-### Option B: Clone Manually
-
-```bash
-git clone https://github.com/aks5686/ios-boilerplate.git MyApp
-cd MyApp
-rm -rf .git && git init
-```
-
-Then rename the project to match your app:
-
-1. In Xcode, open `Boilerplate/Boilerplate.xcodeproj`, select the **Boilerplate** project in the navigator, and rename both the project and the `Boilerplate` target to your app's name (Xcode will offer to rename associated files/folders — accept it).
-2. Rename the `Boilerplate/`, `BoilerplateTests/`, and `BoilerplateUITests/` folders on disk to match, if Xcode didn't already do so.
-3. Update the bundle identifier in the target's **Signing & Capabilities** tab.
-4. Search the project for remaining `Boilerplate` references (scheme name, `AppEnvironment` base URLs in `AuthRepository.swift`, this README) and update them.
+1. **Create your repo from this template** — click **[Use this template](https://github.com/aks5686/ios-boilerplate/generate)** at the top of the repo (or the green "Use this template" button on GitHub) to create your own repository seeded with this codebase — no fork relationship, no shared history, ready to push to on day one.
+2. **Clone it locally**:
+   ```bash
+   git clone https://github.com/<you>/<your-repo>.git
+   cd <your-repo>
+   ```
+3. **Commit before renaming** — `setup.sh` renames files and folders in place; make sure your working tree is clean (or at least committed) first, so you can diff or roll back easily if anything looks off.
+4. **Run the setup script** with your app's name:
+   ```bash
+   ./setup.sh MyApp
+   ```
+   This renames every `Boilerplate` reference throughout the project (Xcode project/target, bundle identifier, source files, class names, CI workflow) to `MyApp`. It does not touch this README — update it yourself afterward.
+5. **Open the `.xcodeproj` in Xcode and build** — open `MyApp.xcodeproj`, select the `MyApp` scheme, and build/run.
 
 ## Features
 
@@ -42,45 +37,45 @@ Then rename the project to match your app:
 ## Folder Structure
 
 ```
+Boilerplate.xcodeproj/
 Boilerplate/
-├── Boilerplate/
-│   ├── App/
-│   │   └── AppDependencies.swift        # Composition root / manual DI container
-│   ├── BoilerplateApp.swift             # @main App entry point
-│   ├── ContentView.swift                # Root view
-│   │
-│   ├── Core/                            # Cross-feature infrastructure
-│   │   ├── Network/
-│   │   │   ├── NetworkClient.swift      # async/await URLSession wrapper + Endpoint protocol
-│   │   │   └── APIError.swift           # Localized network error type
-│   │   ├── Storage/
-│   │   │   └── KeychainManager.swift    # Secure Keychain read/write/delete
-│   │   └── Extensions/
-│   │       ├── View+Extensions.swift
-│   │       └── String+Extensions.swift
-│   │
-│   ├── DesignSystem/                    # App-wide visual tokens
-│   │   ├── Colors/AppColors.swift
-│   │   └── Typography/AppFonts.swift
-│   │
-│   ├── Features/                        # One folder per feature, each with its own layers
-│   │   └── Auth/
-│   │       ├── Domain/
-│   │       │   ├── AuthUseCaseProtocol.swift   # Business logic contract + domain models
-│   │       │   └── AuthUseCase.swift           # Business logic implementation
-│   │       ├── Data/
-│   │       │   └── AuthRepository.swift        # Network + Keychain-backed data source
-│   │       └── Presentation/
-│   │           ├── LoginViewModel.swift        # @Observable view model
-│   │           └── LoginView.swift             # SwiftUI screen
-│   │
-│   └── Assets.xcassets/
+├── App/
+│   └── AppDependencies.swift        # Composition root / manual DI container
+├── BoilerplateApp.swift             # @main App entry point
+├── ContentView.swift                # Root view
 │
-├── BoilerplateTests/                    # Unit tests (Swift Testing)
-└── BoilerplateUITests/                  # UI tests
+├── Core/                            # Cross-feature infrastructure
+│   ├── Network/
+│   │   ├── NetworkClient.swift      # async/await URLSession wrapper + Endpoint protocol
+│   │   └── APIError.swift           # Localized network error type
+│   ├── Storage/
+│   │   └── KeychainManager.swift    # Secure Keychain read/write/delete
+│   └── Extensions/
+│       ├── View+Extensions.swift
+│       └── String+Extensions.swift
+│
+├── DesignSystem/                    # App-wide visual tokens
+│   ├── Colors/AppColors.swift
+│   └── Typography/AppFonts.swift
+│
+├── Features/                        # One folder per feature, each with its own layers
+│   └── Auth/
+│       ├── Domain/
+│       │   ├── AuthUseCaseProtocol.swift   # Business logic contract + domain models
+│       │   └── AuthUseCase.swift           # Business logic implementation
+│       ├── Data/
+│       │   └── AuthRepository.swift        # Network + Keychain-backed data source
+│       └── Presentation/
+│           ├── LoginViewModel.swift        # @Observable view model
+│           └── LoginView.swift             # SwiftUI screen
+│
+└── Assets.xcassets/
+
+BoilerplateTests/                    # Unit tests (Swift Testing)
+BoilerplateUITests/                  # UI tests
 ```
 
-The Xcode project uses **synchronized file system groups** (Xcode 16+), so any file or folder added under `Boilerplate/Boilerplate/` on disk is automatically picked up by the target — there's no `.pbxproj` bookkeeping when adding a new feature file.
+The Xcode project uses **synchronized file system groups** (Xcode 16+), so any file or folder added under `Boilerplate/` on disk is automatically picked up by the target — there's no `.pbxproj` bookkeeping when adding a new feature file.
 
 ## Architecture
 
@@ -144,7 +139,7 @@ try keychainManager.delete(for: "current_user")
 
 ```bash
 xcodebuild test \
-  -project Boilerplate/Boilerplate.xcodeproj \
+  -project Boilerplate.xcodeproj \
   -scheme Boilerplate \
   -destination 'generic/platform=iOS Simulator'
 ```

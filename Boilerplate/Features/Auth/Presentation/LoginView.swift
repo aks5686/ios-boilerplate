@@ -41,6 +41,16 @@ struct LoginView: View {
             .navigationTitle("Login")
             .navigationBarTitleDisplayMode(.inline)
             .errorAlert(error: $viewModel.error)
+            .navigationDestination(isPresented: Binding(
+                get: { viewModel.isAuthenticated },
+                set: { isPresented in
+                    if !isPresented { Task { await viewModel.logout() } }
+                }
+            )) {
+                HomeView(user: viewModel.currentUser) {
+                    Task { await viewModel.logout() }
+                }
+            }
             .task {
                 await viewModel.checkAuthenticationStatus()
             }

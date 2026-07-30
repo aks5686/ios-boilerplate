@@ -20,7 +20,7 @@ jobs:
       - name: Build
         run: |
           xcodebuild build \
-            -project Boilerplate/Boilerplate.xcodeproj \
+            -project Boilerplate.xcodeproj \
             -scheme Boilerplate \
             -destination 'generic/platform=iOS Simulator' \
             -configuration Debug \

@@ -25,6 +25,7 @@ final class LoginViewModel {
 
     private(set) var isLoading: Bool = false
     private(set) var isAuthenticated: Bool = false
+    private(set) var currentUser: User?
     var error: Error?
 
     // MARK: - Dependencies
@@ -58,7 +59,7 @@ final class LoginViewModel {
 
         do {
             let credentials = AuthCredentials(email: email, password: password)
-            _ = try await authUseCase.login(credentials: credentials)
+            currentUser = try await authUseCase.login(credentials: credentials)
             isAuthenticated = true
         } catch {
             self.error = error
@@ -72,6 +73,7 @@ final class LoginViewModel {
         do {
             try await authUseCase.logout()
             isAuthenticated = false
+            currentUser = nil
             email = ""
             password = ""
         } catch {
@@ -81,6 +83,9 @@ final class LoginViewModel {
 
     func checkAuthenticationStatus() async {
         isAuthenticated = await authUseCase.isAuthenticated()
+        if isAuthenticated {
+            currentUser = try? await authUseCase.getCurrentUser()
+        }
     }
 
     func clearError() {

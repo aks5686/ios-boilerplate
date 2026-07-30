@@ -11,7 +11,7 @@ import SwiftUI
 struct BoilerplateApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            LoginView(viewModel: AppDependencies.shared.makeLoginViewModel())
         }
     }
 }

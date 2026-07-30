@@ -20,16 +20,12 @@ final class AuthUseCase: AuthUseCaseProtocol, Sendable {
     }
 
     func login(credentials: AuthCredentials) async throws -> User {
-        guard credentials.email.trimmed.isValidEmail else {
+        guard !credentials.email.isBlank else {
             throw ValidationError.invalidEmail
         }
 
         guard !credentials.password.isBlank else {
             throw ValidationError.invalidPassword
-        }
-
-        guard credentials.password.isValidPassword else {
-            throw ValidationError.passwordTooShort
         }
 
         return try await repository.login(
